@@ -1,0 +1,37 @@
+#cloud-config
+system_info:
+  default_user:
+    name: ${vm_admin}
+
+#
+# First we'll update the repo and then update the OS.
+#
+package_update: true
+package_upgrade: true
+
+#
+# Install packages
+#
+packages:
+  - python3-pip
+  - if ! [ -z "${rwx_filestore_endpoint}" ]
+  - then
+      #
+      # mount the nfs
+      #
+  -   while [ `df -h | grep "${rwx_filestore_endpoint}:${rwx_filestore_path}" | wc -l` -eq 0 ]; do sleep 5 && mount -a ; done
+      #
+      # Change permissions and owner
+      #
+  -   mkdir -p ${dsvm_rwx_filestore_path}/pvs
+  -   $(chmod -fR 777 ${dsvm_rwx_filestore_path} ; echo)
+  -   $(chown -R nobody:nogroup ${dsvm_rwx_filestore_path} ; echo)
+  - fi
+  #
+  # Install Python packages
+  #
+  - mkdir -p /opt/sas/viya/certificates
+  - mkdir -p /opt/sas/digi/security
+  - pip3 install graphviz   html5lib   image   matplotlib   opencv-python   pandas   plotly   requests   sas-dlpy   sas-esppy   sasoptpy   saspy==3.3.7   scikit-learn   swat   tensorflow   ws4py scikit-learn sasctl pickle-mixin
+  - R -e \"install.packages('https://github.com/sassoftware/R-swat/releases/download/v1.6.3/R-swat-1.6.3+vb21030-linux-64.tar.gz', repos=NULL, type='file')\"
+  

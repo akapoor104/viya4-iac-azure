@@ -1,3 +1,37 @@
+# SAS Machine Learning Data Center for Microsoft Azure
+
+## Overview
+
+This project forks & extends SAS provided [Viya IAC Terraform scripts for Azure](https://github.com/sassoftware/viya4-iac-azure).  It provides additional Terraform modules that further creates and integrates the following additional Azure resources:
+>-	Azure Resource Group
+>-	Azure Application Insights
+>-	Azure Key Vault
+>-	Azure Machine Learning Workspace
+>-	Azure Synapse Workspace (includes creation of Synapse dedicated SQL Pool & Spark Pool)
+>-	Data Science Virtual Machine (includes SAS SWAT packages for Python/R for JupyterHub)
+
+## Motivation
+
+>- Provides clean & clear framework for tighter integration options and reusability
+>- Outcome is a comprehensive setup such as a Analytics centric Data Center for Microsoft Azure.
+>- SAS Viya as a result can integrate and use these services more easily.  Post configuration of Azure Security may be necessary for intricate integration.
+
+
+## Get Started
+
+>- Copy examples/sample-input-dc.tfvars to viya4-iac-azure folder and customize it as per necessary
+>- Installing [viya4-deployment](https://github.com/sassoftware/viya4-deployment) to complete the SAS deployment
+>- Customize the security between resources as necessary
+
+## Additional / Future work-in-progress
+>- Add module for Azure Databricks
+>- Add module for Azure IOT for SAS ESP integration
+>- Add Azure ML compute nodes to support SAS Micro Analytics Service (MAS)
+>- Add automation scripts and runbooks to start/stop to minimize Cloud expense
+
+**Disclaimer:** This project is not promoted or supported by SAS Institute Inc.   It is a personal project, provides a framework for "work-in-progress", makes no warranty and/or security claims.  All Azure cloud expense incurred using it are of your own.  Please use it on ones discretion and risks.
+
+
 # SAS Viya 4 Infrastructure as Code (IaC) for Microsoft Azure
 
 ## Overview

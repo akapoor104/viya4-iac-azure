@@ -1,5 +1,8 @@
 
 # https://docs.microsoft.com/en-us/azure/virtual-network/public-ip-addresses
+# Zone Behavior Change
+# https://azure.microsoft.com/en-us/updates/zone-behavior-change/
+# https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/public_ip
 resource "azurerm_public_ip" "vm_ip" {
   count               = var.create_public_ip ? 1 : 0
   name                = "${var.name}-public_ip"
@@ -7,7 +10,8 @@ resource "azurerm_public_ip" "vm_ip" {
   resource_group_name = var.azure_rg_name
   allocation_method   = "Static"
   sku                 = var.vm_zone == null ? "Basic" : "Standard"
-  zones               = var.vm_zone == null ? [] : [var.vm_zone]
+  #zones               = var.vm_zone == null ? [] : [var.vm_zone]
+  availability_zone   = var.vm_zone == null ? "No-Zone" : "Zone-Redundant"
   tags                = var.tags
 }
 
@@ -91,6 +95,15 @@ resource "azurerm_linux_virtual_machine" "vm" {
   additional_capabilities {
     ultra_ssd_enabled = var.data_disk_storage_account_type == "UltraSSD_LRS" ? true : false
   }
+
+  # dynamic plan {
+  #   for_each = var.plan_product != null ? [1] : []
+  #   content {
+  #     name = var.plan_name
+  #     publisher = var.os_publisher
+  #     product = var.plan_product
+  #   }
+  # }
 
   tags = var.tags
 

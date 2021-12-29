@@ -113,3 +113,13 @@ variable "proximity_placement_group_id" {
   type    = string
   default = ""
 }
+
+variable plan_product {
+  type = string
+  default = null
+}
+
+variable plan_name {
+  type = string
+  default = null
+}

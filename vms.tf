@@ -112,11 +112,82 @@ module "nfs" {
   depends_on                     = [module.vnet]
 }
 
+
+data "template_file" "dsvm-cloudconfig" {
+  template = file("${path.module}/files/cloud-init/dsvm/cloud-config")
+  count    = var.create_dsvm_vm ? 1 : 0
+
+    vars = {
+    mounts = ( var.storage_type == "none"
+               ? "[]"
+               : jsonencode(
+                  [ "${local.rwx_filestore_endpoint}:${local.rwx_filestore_path}",
+                    "${var.dsvm_rwx_filestore_path}",
+                    "nfs",
+                    "_netdev,auto,x-systemd.automount,x-systemd.mount-timeout=10,timeo=14,x-systemd.idle-timeout=1min,relatime,hard,rsize=1048576,wsize=1048576,vers=3,tcp,namlen=255,retrans=2,sec=sys,local_lock=none",
+                    "0",
+                    "0"
+                  ])
+             )
+    rwx_filestore_endpoint  = local.rwx_filestore_endpoint
+    rwx_filestore_path      = local.rwx_filestore_path
+    dsvm_rwx_filestore_path = var.dsvm_rwx_filestore_path
+    vm_admin                = var.dsvm_vm_admin
+  }
+}
+
+
+data "template_cloudinit_config" "dsvm" {
+  count    = var.create_dsvm_vm ? 1 : 0
+
+  gzip          = true
+  base64_encode = true
+
+  part {
+    content_type = "text/cloud-config"
+    content      = data.template_file.dsvm-cloudconfig.0.rendered
+  }
+}
+
+module "dsvm" {
+  source                         = "./modules/azurerm_vm"
+
+  count                          = var.create_dsvm_vm ? 1 : 0
+  name                           = "${var.prefix}-dsvm"
+  azure_rg_name                  = local.aks_rg.name
+  azure_rg_location              = var.location
+  vnet_subnet_id                 = module.vnet.subnets["misc"].id
+  machine_type                   = var.dsvm_vm_machine_type
+  azure_nsg_id                   = local.nsg.id
+  tags                           = var.tags
+  vm_admin                       = var.dsvm_vm_admin
+  vm_zone                        = var.dsvm_vm_zone
+  ssh_public_key                 = local.ssh_public_key
+  cloud_init                     = data.template_cloudinit_config.dsvm.0.rendered
+  create_public_ip               = var.create_dsvm_public_ip
+  # plan_product                   = var.dsvm_plan_product
+  # plan_name                      = var.dsvm_plan_name
+  os_sku                         = var.dsvm_os_sku
+  os_offer                       = var.dsvm_os_offer
+  os_version                     = var.dsvm_os_version
+  os_publisher                   = var.dsvm_os_publisher
+  os_disk_caching                = var.dsvm_os_disk_data_disk_caching
+  os_disk_size                   = var.dsvm_os_data_disk
+  # data_disk_count                = 1
+  # data_disk_size                 = var.dsvm_data_disk
+  # data_disk_storage_account_type = var.dsvm_disk_type
+  # data_disk_zones                = var.dsvm_disk_zones
+
+  depends_on                     = [module.vnet]
+}
+
 resource "azurerm_network_security_rule" "vm-ssh" {
   name                        = "${var.prefix}-ssh"
   description                 = "Allow SSH from source"
   count                       = ( length(local.vm_public_access_cidrs) > 0
-                                  && (( var.create_jump_public_ip && var.create_jump_vm ) || (var.create_nfs_public_ip && var.storage_type == "standard"))
+                                  && (( var.create_jump_public_ip && var.create_jump_vm ) 
+                                  || (var.create_nfs_public_ip && var.storage_type == "standard")
+                                  || (var.create_jump_vm))
                                   ? 1 : 0
                                 )
   priority                    = 120
@@ -125,6 +196,25 @@ resource "azurerm_network_security_rule" "vm-ssh" {
   protocol                    = "Tcp"
   source_port_range           = "*"
   destination_port_range      = "22"
+  source_address_prefixes     = local.vm_public_access_cidrs
+  destination_address_prefix  = "*"
+  resource_group_name         = local.nsg_rg_name
+  network_security_group_name = local.nsg.name
+}
+
+resource "azurerm_network_security_rule" "vm-jupyter" {
+  name                        = "${var.prefix}-jupyter"
+  description                 = "Allow JupyterHub from source"
+  count                       = ( length(local.vm_public_access_cidrs) > 0
+                                  || ( var.create_dsvm_public_ip && var.create_dsvm_vm )
+                                  ? 1 : 0
+                                )
+  priority                    = 121
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "8000"
   source_address_prefixes     = local.vm_public_access_cidrs
   destination_address_prefix  = "*"
   resource_group_name         = local.nsg_rg_name

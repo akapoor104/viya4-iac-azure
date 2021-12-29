@@ -601,3 +601,141 @@ variable "aks_identity" {
     error_message = "ERROR: Supported values for `aks_identity` are: uai, sp."
   }
 }
+
+# SAS Data Center
+variable create_sas_data_center {
+  default = false
+}
+
+# Azure Key Vault
+variable key_vault_name {
+  default = "key-vault"
+}
+
+variable key_vault_sku_name {
+  description = "Key Vault SKU"
+  default = "premium"
+}
+
+# Azure Storage Account
+variable storage_account_name {
+  description = "Storage Account to be used for SAS Viya"
+  default = "viya_storage_account"
+}
+
+variable storage_account_tier {
+  default = "Standard"
+}
+
+variable storage_account_replication_type {
+  default = "LRS"
+}
+
+# Azure Machine Learning Workspace
+variable ml_workspace_name {
+  default = "ml-workspace"
+}
+
+# Azure Synapse Workspace
+variable synapse_workspace_name {
+  default = "synapse-workspace"
+}
+
+
+variable synapse_admin_login {
+  default = null
+}
+
+variable synapse_admin_password {
+  default = null
+}
+
+# Possible values are DW100c, DW200c, DW300c, DW400c, DW500c, DW1000c, DW1500c, DW2000c, DW2500c, DW3000c, DW5000c, DW6000c, DW7500c, DW10000c, DW15000c or DW30000c
+variable synapse_sqlpool_sku_name {
+  default = "DW100c"
+}
+
+variable spark_version {
+  default = "2.4"
+}
+
+variable create_dsvm_vm {
+  default = false
+}
+
+variable dsvm_vm_machine_type {
+  default = "Standard_DS1_v2"
+}
+
+variable dsvm_plan_product {
+  default = "linux-data-science-vm-ubuntu"
+}
+
+variable dsvm_plan_name {
+  default = "linuxdsvmubuntu"
+}
+
+variable dsvm_os_sku {
+  default = "1804"
+}
+
+variable dsvm_os_version {
+  default = "latest"
+}
+
+variable dsvm_os_offer {
+  default = "ubuntu-1804"
+}
+
+variable dsvm_os_publisher {
+  default = "microsoft-dsvm"
+}
+
+variable dsvm_os_disk_data_disk_caching {
+  default = "ReadWrite"
+}
+
+variable dsvm_os_data_disk {
+  default = "150"
+}
+
+variable dsvm_data_disk {
+  default = "100"
+}
+
+variable dsvm_disk_type {
+  default     = "Standard_LRS"
+  description = "The type of storage to use for the managed disk. Possible values are Standard_LRS, Premium_LRS, StandardSSD_LRS or UltraSSD_LRS."
+
+  validation {
+    condition     = contains(["Standard_LRS", "Premium_LRS", "StandardSSD_LRS", "UltraSSD_LRS"], var.dsvm_disk_type)
+    error_message = "ERROR: dsvm_raid_disk_type - Valid values include - Standard_LRS, Premium_LRS, StandardSSD_LRS or UltraSSD_LRS."
+  }
+}
+
+variable dsvm_vm_admin {
+  default = null
+}
+
+variable dsvm_vm_password {
+  default = null
+}
+
+variable dsvm_vm_zone {
+  default = null
+}
+
+variable create_dsvm_public_ip {
+  default = false
+}
+
+
+variable dsvm_disk_zones {
+  description = "A collection containing the availability zones to allocate the Managed Disk in."
+  default     = []
+}
+
+variable "dsvm_rwx_filestore_path" {
+  description = "OS path used in cloud-init for NFS integration"
+  default     = "/viya-share"
+}

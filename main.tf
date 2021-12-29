@@ -35,6 +35,15 @@ data "azurerm_resource_group" "network_rg" {
   name     = var.vnet_resource_group_name
 }
 
+# [AK] Add Resource Group with the naming convention of "prefix-rg"
+module "resource_group" {
+  source = "./modules/azurerm_resource_group"
+
+  name                = "${var.prefix}-rg"
+  location            = var.location
+  tags                = var.tags
+}
+
 resource "azurerm_resource_group" "aks_rg" {
   count    = var.resource_group_name == null ? 1 : 0
   name     = "${var.prefix}-rg"
@@ -126,6 +135,81 @@ resource "azurerm_network_security_rule" "acr" {
   destination_address_prefix  = "*"
   resource_group_name         = local.nsg_rg_name
   network_security_group_name = local.nsg.name
+}
+
+# [AK] Add Azure Application Insight
+module "azurerm_application_insight" {
+  source = "./modules/azurerm_application_insights"
+
+  azure_application_insights_prefix = var.prefix
+  azure_application_insights_rg = local.aks_rg.name
+  azure_application_insights_location = var.location
+  tags = var.tags
+}
+
+# [AK] Add Azure Storage Account
+module "azurerm_storage_account" {
+  source = "./modules/azure_storage_account"
+
+  storage_account_prefix = var.prefix
+  storage_account_name = var.storage_account_name
+  storage_account_location = var.location
+  storage_account_rg = local.aks_rg.name
+  storage_account_tier = var.storage_account_tier
+  storage_account_replication_type = var.storage_account_replication_type
+  tags = var.tags
+}
+
+# [AK] Add Azure Key Vault
+module "azurerm_key_vault" {
+  source = "./modules/azurerm_key_vault"
+  
+  key_vault_prefix = var.prefix
+  key_vault_name = var.key_vault_name
+  key_vault_location = var.location
+  key_vault_rg = local.aks_rg.name
+  key_tenant_id = data.azurerm_subscription.current.tenant_id
+  key_vault_sku_name = var.key_vault_sku_name
+  tags = var.tags
+}
+
+# [AK] Add Azure Synapse Workspace
+module "azure_synapse_workspace" {
+  source = "./modules/azurerm_synapse_workspace"
+
+  synapse_prefix = var.prefix
+  synapse_workspace_name = var.synapse_workspace_name
+  synapse_rg = local.aks_rg.name
+  synapse_location = var.location
+  synapse_gen2_storage_id = module.azurerm_storage_account.azure_storage_datalake_id
+  synapse_admin_login = var.synapse_admin_login
+  synapse_admin_password = var.synapse_admin_password
+  synapse_sqlpool_sku_name = var.synapse_sqlpool_sku_name
+  spark_version = var.spark_version
+  storage_connection = module.azurerm_storage_account.azure_storage_primary_connection_string
+  compute_subnet_id = module.vnet.subnets["synapse"].id
+
+  tags = var.tags
+
+  depends_on = [module.vnet, module.azurerm_storage_account]
+}
+
+# [AK] Add Azure Machine Learning
+module "azure_ml_learning" {
+  source = "./modules/azurerm_machine_learning_workspace"
+
+  ml_prefix = var.prefix
+  ml_workspace_name = var.ml_workspace_name
+  ml_rg_name = local.aks_rg.name
+  ml_location = var.location
+  application_insights_id = module.azurerm_application_insight.application_insights_id
+  key_vault_id = module.azurerm_key_vault.key_vault_id
+  storage_account_id = module.azurerm_storage_account.azure_storage_id
+  acr_id = azurerm_container_registry.acr.0.id
+  synapse_spark_pool_id = module.azure_synapse_workspace.synapse_spark_pool_id
+  tags = var.tags
+
+  depends_on = [module.azurerm_application_insight, module.azurerm_key_vault, module.azurerm_storage_account, azurerm_container_registry.acr, module.azure_synapse_workspace]
 }
 
 module "aks" {

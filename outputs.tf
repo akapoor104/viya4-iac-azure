@@ -139,3 +139,54 @@ output "cluster_node_pool_mode" {
 output "cluster_api_mode" {
   value = var.cluster_api_mode
 }
+
+output "resource_group" {
+  value = module.resource_group.name
+}
+
+output "storage_account" {
+  value = module.azurerm_storage_account.azure_storage_name
+}
+
+output dsvm_public_ip {
+  value = var.create_dsvm_vm && var.create_dsvm_public_ip ? module.dsvm.0.public_ip_address : null
+}
+
+output "synapse_workspace_url" {
+  value = module.azure_synapse_workspace.synapse_workspace_url
+}
+
+output "synapse_sql_pool_name" {
+  value = module.azure_synapse_workspace.synapse_sql_pool_name
+}
+
+output "synapse_spark_pool_name" {
+  value = module.azure_synapse_workspace.synapse_spark_pool_name
+}
+
+output "azure_machine_learning_workspace_name" {
+  value = module.azure_ml_learning.azure_ml_workspace_name
+}
+
+output "azure_machine_learning_workspace_url" {
+  value = module.azure_ml_learning.azure_ml_workspace_url
+}
+
+output "azure_key_vault_name" {
+  value = module.azurerm_key_vault.key_vault_name
+}
+
+output "azure_key_vault_uri" {
+  value = module.azurerm_key_vault.key_vault_uri
+}
+
+output "azure_application_insights_name" {
+  value = module.azurerm_application_insight.application_insights_name
+}
+
+output "azure_storage_account_name" {
+  value = module.azurerm_storage_account.azure_storage_name
+}
+
+
+
