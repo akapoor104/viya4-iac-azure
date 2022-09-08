@@ -38,7 +38,7 @@ variable "prefix" {
 }
 variable "location" {
   description = "The Azure Region to provision all resources in this script"
-  default     = "East US"
+  default     = "eastus"
 }
 
 variable "ssh_public_key" {
@@ -83,7 +83,7 @@ variable "default_nodepool_vm_type" {
 }
 variable "kubernetes_version" {
   description = "The AKS cluster K8s version"
-  default     = "1.19.13"
+  default     = "1.23.8"
 }
 
 variable "default_nodepool_max_nodes" {
@@ -134,9 +134,14 @@ variable "aks_docker_bridge_cidr" {
   default     = "172.17.0.1/16"
 }
 
-variable "aks_outbound_type" {
+variable "cluster_egress_type" {
   description = "The outbound (egress) routing method which should be used for this Kubernetes Cluster. Possible values are loadBalancer and userDefinedRouting. Defaults to loadBalancer."
-  default     = "loadBalancer"
+  default     = null
+  validation {
+    condition     = var.cluster_egress_type != null ? contains(["loadBalancer", "userDefinedRouting"], var.cluster_egress_type) : true
+    error_message = "ERROR: Supported values for `cluster_egress_type` are: loadBalancer, userDefinedRouting."
+  }
+
 }
 
 variable "aks_pod_cidr" {
@@ -393,18 +398,6 @@ variable node_pools {
         "launcher.sas.com/prepullImage" = "sas-programming-environment"
       }
     },
-    connect = {
-      "machine_type" = "Standard_E16s_v3"
-      "os_disk_size" = 200
-      "min_nodes"    = 0
-      "max_nodes"    = 5
-      "max_pods"     = 110
-      "node_taints"  = ["workload.sas.com/class=connect:NoSchedule"]
-      "node_labels" = {
-        "workload.sas.com/class"        = "connect"
-        "launcher.sas.com/prepullImage" = "sas-programming-environment"
-      }
-    },
     stateless = {
       "machine_type" = "Standard_D16s_v3"
       "os_disk_size" = 200
@@ -513,7 +506,7 @@ variable "nsg_name" {
 variable "egress_public_ip_name" {
   type        = string
   default     = null
-  description = "Name of pre-existing Public IP for the Network egress."
+  description = "DEPRECATED: Name of pre-existing Public IP for the Network egress."
 }
 
 variable "subnet_names" {

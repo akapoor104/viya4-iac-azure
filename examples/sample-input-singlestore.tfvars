@@ -40,6 +40,7 @@ default_nodepool_vm_type   = "Standard_D8s_v4"
 
 # AKS Node Pools config
 node_pools = {
+
   cas = {
     "machine_type" = "Standard_E16s_v3"
     "os_disk_size" = 200
@@ -84,6 +85,17 @@ node_pools = {
     "node_labels" = {
       "workload.sas.com/class" = "stateful"
     }
+  },
+  singlestore = {
+    "machine_type" = "Standard_E16ds_v5"         
+    "os_disk_size" = 200
+    "min_nodes" = 0
+    "max_nodes" = 7
+    "max_pods" = 110
+    "node_taints" = ["workload.sas.com/class=singlestore:NoSchedule"]
+    "node_labels" = {
+      "workload.sas.com/class" = "singlestore"
+    }
   }
 }
 
@@ -103,3 +115,37 @@ nfs_raid_disk_type   = "Standard_LRS"
 
 # Azure Monitor
 create_aks_azure_monitor = false
+
+# SingleStore configuration
+aks_network_plugin = "azure"
+
+# Subnets for SingleStore using azure network plugin
+subnets = {
+  aks = {
+    "prefixes": ["192.168.0.0/21"],
+    "service_endpoints": ["Microsoft.Sql"],
+    "enforce_private_link_endpoint_network_policies": false,
+    "enforce_private_link_service_network_policies": false,
+    "service_delegations": {},
+  }
+  misc = {
+    "prefixes": ["192.168.8.0/24"],
+    "service_endpoints": ["Microsoft.Sql"],
+    "enforce_private_link_endpoint_network_policies": false,
+    "enforce_private_link_service_network_policies": false,
+    "service_delegations": {},
+  }
+  ## If using ha storage then the following is also added
+  netapp = {
+    "prefixes": ["192.168.9.0/24"],
+    "service_endpoints": [],
+    "enforce_private_link_endpoint_network_policies": false,
+    "enforce_private_link_service_network_policies": false,
+    "service_delegations": {
+      netapp = {
+        "name"    : "Microsoft.Netapp/volumes"
+        "actions" : ["Microsoft.Network/networkinterfaces/*", "Microsoft.Network/virtualNetworks/subnets/join/action"]
+      }
+    }
+  }
+}

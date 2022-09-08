@@ -32,7 +32,7 @@ container_registry_sku              = "Standard"
 container_registry_admin_enabled    = false
 
 # AKS config
-kubernetes_version         = "1.19.13"
+kubernetes_version         = "1.23.8"
 default_nodepool_min_nodes = 2
 default_nodepool_vm_type   = "Standard_D8s_v4"
 
@@ -58,18 +58,6 @@ node_pools = {
     "node_taints"  = ["workload.sas.com/class=compute:NoSchedule"]
     "node_labels" = {
       "workload.sas.com/class"        = "compute"
-      "launcher.sas.com/prepullImage" = "sas-programming-environment"
-    }
-  },
-  connect = {
-    "machine_type" = "Standard_E16s_v3"
-    "os_disk_size" = 200
-    "min_nodes"    = 2
-    "max_nodes"    = 3
-    "max_pods"     = 110
-    "node_taints"  = ["workload.sas.com/class=connect:NoSchedule"]
-    "node_labels" = {
-      "workload.sas.com/class"        = "connect"
       "launcher.sas.com/prepullImage" = "sas-programming-environment"
     }
   },

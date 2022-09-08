@@ -3,7 +3,7 @@ ARG AZURECLI_VERSION=2.24.2
 
 FROM hashicorp/terraform:$TERRAFORM_VERSION as terraform
 FROM mcr.microsoft.com/azure-cli:$AZURECLI_VERSION
-ARG KUBECTL_VERSION=1.19.13
+ARG KUBECTL_VERSION=1.23.8
 
 WORKDIR /viya4-iac-azure
 
@@ -15,6 +15,7 @@ RUN apk --update --no-cache add git openssh \
   && chmod 755 ./kubectl /viya4-iac-azure/docker-entrypoint.sh \
   && mv ./kubectl /usr/local/bin/kubectl \
   && chmod g=u -R /etc/passwd /etc/group /viya4-iac-azure \
+  && git config --system --add safe.directory /viya4-iac-azure \
   && terraform init
 
 ENV TF_VAR_iac_tooling=docker

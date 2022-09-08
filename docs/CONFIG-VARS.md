@@ -32,7 +32,7 @@ Terraform input variables can be set in the following ways:
 | Name | Description | Type | Default | Notes |
 | :--- | ---: | ---: | ---: | ---: |
 | prefix | A prefix used in the name of all the Azure resources created by this script. | string | | The prefix string must start with a lowercase letter and contain only lowercase alphanumeric characters and dashes (-), but it cannot end with a dash. |
-| location | The Azure Region to provision all resources in this script. | string | "East US" | |
+| location | The Azure Region to provision all resources in this script. | string | "eastus" | |
 
 ### Azure Authentication
 
@@ -80,9 +80,11 @@ You can use `default_public_access_cidrs` to set a default range for all created
 ## Networking
 
 | Name | Description | Type | Default | Notes |
-| :--- | ---: | ---: | ---: | ---: |
+| :--- | ---: | ---: | ---: | :--- |
 | vnet_address_space | Address space for created vnet | string | "192.168.0.0/16" | This variable is ignored when vnet_name is set (AKA bring your own vnet). |
 | subnets | Subnets to be created and their settings | map(object) | *check below* | This variable is ignored when subnet_names is set (AKA bring your own subnets). All defined subnets must exist within the vnet address space. |
+| cluster_egress_type | The outbound (egress) routing method to be used for this Kubernetes Cluster | string | "loadBalancer" | Possible values: <ul><li>`loadBalancer`<li>`userDefinedRouting`</ul> By default, AKS will create and use a [loadbalancer](https://docs.microsoft.com/en-us/azure/aks/load-balancer-standard) for outgoing connections.<p>Set to `userDefinedRouting` when using your own network [egress](https://docs.microsoft.com/en-us/azure/aks/egress-outboundtype). |
+
 
 The default values for the `subnets` variable are as follows:
 
@@ -139,8 +141,6 @@ Note: All of the following resources are expected to be in the Resource Group se
 | subnet_names | Existing subnets mapped to desired usage. | map(string) | null | Only required if deploying into existing subnets. See the example that follows. |
 | nsg_name | Name of pre-existing network security group. | string | null | Only required if deploying into existing NSG. |
 | aks_uai_name | Name of existing User Assigned Identity for the cluster | string | null | This Identity will need permissions as listed in [AKS Cluster Identity Permissions](https://docs.microsoft.com/en-us/azure/aks/concepts-identity#aks-cluster-identity-permissions) and [Additional Cluster Identity Permissions](https://docs.microsoft.com/en-us/azure/aks/concepts-identity#additional-cluster-identity-permissions). Alternatively, use can use the [Contributor](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#contributor) role for this Identity. |
-| egress_public_ip_name | Name of pre-existing public ip resource for your network egress (NAT, Firewall, or similar). | string | null | Only required when using your own network [egress](https://docs.microsoft.com/en-us/azure/aks/egress-outboundtype). By default, AKS will create and use a [loadbalancer](https://docs.microsoft.com/en-us/azure/aks/load-balancer-standard) for outgoing connections. |
-
 
 Example for the `subnet_names` variable:
 
@@ -163,7 +163,7 @@ Ubuntu 20.04 LTS is the operating system used on the Jump/NFS servers. Ubuntu cr
 | :--- | ---: | ---: | ---: | ---: |
 | partner_id | A GUID that is registered with Microsoft to facilitate partner resource usage attribution | string | "5d27f3ae-e49c-4dea-9aa3-b44e4750cd8c" | Defaults to SAS partner GUID. When you deploy this Terraform configuration, Microsoft can identify the installation of SAS software with the deployed Azure resources. Microsoft can then correlate the resources that are used to support the software. Microsoft collects this information to provide the best experiences with their products and to operate their business. The data is collected and governed by Microsoft's privacy policies, located at https://www.microsoft.com/trustcenter. |
 | create_static_kubeconfig | Allows the user to create a provider / service account-based kubeconfig file | bool | true | A value of `false` will default to using the cloud provider's mechanism for generating the kubeconfig file. A value of `true` will create a static kubeconfig that uses a `Service Account` and `Cluster Role Binding` to provide credentials. |
-| kubernetes_version | The AKS cluster Kubernetes version | string | "1.19.13" | |
+| kubernetes_version | The AKS cluster Kubernetes version | string | "1.23.8" | |
 | create_jump_vm | Create bastion host | bool | true | |
 | create_jump_public_ip | Add public IP address to the jump VM | bool | true | |
 | jump_vm_admin | Operating system Admin User for the jump VM | string | "jumpuser" | |
@@ -190,7 +190,7 @@ Ubuntu 20.04 LTS is the operating system used on the Jump/NFS servers. Ubuntu cr
 
 ### Additional Node Pools
 
-Additional node pools can be created separate from the default node pool. This is done with the `node_pools` variable, which is a map of objects. Each node pool requires the following variables:
+Additional node pools can be created separate from the default node pool. This is done with the `node_pools` variable, which is a map of objects. Irrespective of the default values, the following variables are required for each node pool:
 
 | Name | Description | Type | Notes |
 | :--- | ---: | ---: | ---: |
@@ -226,18 +226,6 @@ The default values for the `node_pools` variable are as follows:
     "node_taints"           = ["workload.sas.com/class=compute:NoSchedule"]
     "node_labels" = {
       "workload.sas.com/class"        = "compute"
-      "launcher.sas.com/prepullImage" = "sas-programming-environment"
-    }
-  },
-  connect = {
-    "machine_type"          = "Standard_E16s_v3"
-    "os_disk_size"          = 200
-    "min_nodes"             = 0
-    "max_nodes"             = 5
-    "max_pods"              = 110
-    "node_taints"           = ["workload.sas.com/class=connect:NoSchedule"]
-    "node_labels" = {
-      "workload.sas.com/class"        = "connect"
       "launcher.sas.com/prepullImage" = "sas-programming-environment"
     }
   },
